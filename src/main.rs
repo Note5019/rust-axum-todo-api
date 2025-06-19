@@ -1,44 +1,12 @@
-fn main() {
-    // TODO
-    // get all by user
-    // get todo list by user
-    // create a todo
-    // edit a todo
-    // make as completed
-    // delete a todo
+#[tokio::main]
+async fn main() {
+    use axum::{Router, routing::get};
 
-    // register a user
-    // login
-    println!("Hello, world!");
+    // build our application with a single route
+    let app = Router::new()
+    .route("/", get(|| async { "Hello, World!" }));
 
-    /*
-    request
-        -> router
-            -> handler (aka controller)
-                extractor (Path, Query)
-                -> usecases (business logic)
-                   models (aka transformer)
-                    -> repositories
-                        entities (aka table schema)
-                        -> database
-                response (IntoResponse)
-
-    error handlering
-    middleware (ServiceBuilder is recommended)
-    
-    Sharing state with handlers (share database connection)
-    - State extractor >> .with_state(shared_state)
-    - Request extensions >> .layer(Extension(shared_state))
-    - Closure captures (ข้อเสีย เขียนเยอะ)
-    ```rust
-    let shared_state = Arc::new(AppState { /* ... */ });
-
-    post({
-            let shared_state = Arc::clone(&shared_state);
-            move |body| create_user(body, shared_state)
-        }),
-    ```
-    - task-local variables (smol does not yet support)
-
-     */
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
