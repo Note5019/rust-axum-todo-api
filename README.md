@@ -36,3 +36,19 @@
         }),
     ```
     - task-local variables (smol does not yet support)
+
+
+## Create database
+```sql
+begin;
+    create table todos 
+    ( 
+        "id" serial primary key,
+        "topic" varchar(64) not null,
+        "completed" BOOLEAN DEFAULT false,
+        "completed_at" timestamp,
+        "created_at" timestamp not null,
+        "updated_at" timestamp not null
+    );
+commit;
+```

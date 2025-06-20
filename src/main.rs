@@ -1,12 +1,52 @@
+use axum::{
+    Router,
+    routing::{get, post},
+};
+use rust_axum_todo_api::time_helper::{IntoTimerHelperShared, TimerHelper};
+use rust_axum_todo_api::todo::handler::create_todo;
+use rust_axum_todo_api::todo::repositories::{SharedTodoRepository, TodoRepository};
+use rust_axum_todo_api::{database, setting::Setting};
+use std::sync::Arc;
+use tracing::info;
+
 #[tokio::main]
 async fn main() {
-    use axum::{Router, routing::get};
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
 
-    // build our application with a single route
+    let setting = Setting::new().unwrap();
+    info!("setting has been loaded.");
+
+    let db_pool = database::conn_getting(Arc::clone(&setting)).await.unwrap();
+    info!("database connection has been established.");
+
+    let timer_helper: IntoTimerHelperShared = TimerHelper::Directly.creation();
+
+    let todo_repository: SharedTodoRepository = TodoRepository::creation(db_pool.clone());
+
     let app = Router::new()
-    .route("/", get(|| async { "Hello, World!" }));
+        .route("/", get(|| async { "Hello, World!" }))
+        .route(
+            "/todos",
+            post({
+                move |body| {
+                    create_todo(
+                        body,
+                        Arc::clone(&todo_repository),
+                        Arc::clone(&timer_helper),
+                    )
+                }
+            }),
+        );
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+        .await
+        .unwrap();
+    info!("Application running!");
+
     axum::serve(listener, app).await.unwrap();
+    info!("Application running! 2");
+
 }
