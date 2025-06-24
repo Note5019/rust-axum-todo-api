@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use crate::todo::entities::Todos;
+use async_trait::async_trait;
 use sqlx::PgPool;
 use tracing::error;
 
@@ -10,6 +10,7 @@ pub type SharedTodoRepository = Arc<dyn TodoMethod + Send + Sync>;
 #[async_trait]
 pub trait TodoMethod {
     async fn add_todo(&self, todo: Todos) -> Result<Todos, sqlx::Error>;
+    async fn get_todos(&self) -> Result<Vec<Todos>, sqlx::Error>;
 }
 
 pub struct TodoRepository {
@@ -44,9 +45,22 @@ impl TodoMethod for TodoRepository {
 
         match res.id {
             Some(_) => Ok(res),
-            None =>{
+            None => {
                 error!("Failed to insert todo:");
                 return Err(sqlx::Error::RowNotFound);
+            }
+        }
+    }
+
+    async fn get_todos(&self) -> Result<Vec<Todos>, sqlx::Error> {
+        match sqlx::query_as::<_, Todos>("SELECT * FROM todos;")
+            .fetch_all(&self.db)
+            .await
+        {
+            Ok(todos) => Ok(todos),
+            Err(e) => {
+                error!("Failed to query: {:?}", e);
+                return Err(e);
             }
         }
     }

@@ -27,6 +27,7 @@ impl IntoResponse for ErrorResponse {
 pub enum APIError {
     AddingTodoError(sqlx::Error),
     TodoNotFound(i32),
+    FailedToQuery(sqlx::Error),
 }
 
 pub trait IntoErrorResponse {
@@ -42,6 +43,10 @@ impl IntoErrorResponse for APIError {
             },
             Self::TodoNotFound(id) => ErrorResponse {
                 error: format!("Todo not found: {}", id),
+                status_code: StatusCode::INTERNAL_SERVER_ERROR,
+            },
+            Self::FailedToQuery(err) => ErrorResponse {
+                error: format!("Failed to query: {:?}", err),
                 status_code: StatusCode::INTERNAL_SERVER_ERROR,
             },
         }

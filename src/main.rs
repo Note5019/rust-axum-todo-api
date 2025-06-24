@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post},
 };
 use rust_axum_todo_api::time_helper::{IntoTimerHelperShared, TimerHelper};
-use rust_axum_todo_api::todo::handler::create_todo;
+use rust_axum_todo_api::todo::handler::{create_todo, get_todos};
 use rust_axum_todo_api::todo::repositories::{SharedTodoRepository, TodoRepository};
 use rust_axum_todo_api::{database, setting::Setting};
 use std::sync::Arc;
@@ -35,13 +35,12 @@ async fn main() {
         .route(
             "/todos",
             post({
-                move |body| {
-                    create_todo(
-                        body,
-                        Arc::clone(&todo_repository),
-                        Arc::clone(&timer_helper),
-                    )
-                }
+                let repo = Arc::clone(&todo_repository);
+                move |body| create_todo(body, repo, Arc::clone(&timer_helper))
+            })
+            .get({
+                let repo = Arc::clone(&todo_repository);
+                move || get_todos(repo)
             }),
         );
 
