@@ -1,23 +1,23 @@
 use std::sync::Arc;
 
-use axum::{Json, http::StatusCode, response::IntoResponse};
+use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 
 use crate::{
-    time_helper::IntoTimerHelperShared,
+    app_state::AppState,
     todo::{
         entities::Todos,
         error::{APIError, IntoErrorResponse},
         model::{TodoAdding, TodoModel},
-        repositories::SharedTodoRepository,
+        repositories::{SharedTodoRepository, TodoRepository},
     },
 };
 
 pub async fn create_todo(
+    State(app): State<Arc<AppState>>,
     Json(body): Json<TodoAdding>,
-    todo_repository: SharedTodoRepository,
-    time_helper: IntoTimerHelperShared,
 ) -> impl IntoResponse {
-    let temp_todo = Todos::new(body.topic.clone(), Arc::clone(&time_helper));
+    let todo_repository: SharedTodoRepository = TodoRepository::creation(app.db.clone());
+    let temp_todo = Todos::new(body.topic.clone(), Arc::clone(&app.time_helper));
 
     let todo = match todo_repository.add_todo(temp_todo).await {
         Ok(todo) => todo,
@@ -27,7 +27,8 @@ pub async fn create_todo(
     (StatusCode::CREATED, Json(todo.to_model())).into_response()
 }
 
-pub async fn get_todos(todo_repository: SharedTodoRepository) -> impl IntoResponse {
+pub async fn get_todos(State(app): State<Arc<AppState>>) -> impl IntoResponse {
+    let todo_repository: SharedTodoRepository = TodoRepository::creation(app.db.clone());
     let todos = match todo_repository.get_todos().await {
         Ok(todos) => todos,
         Err(e) => return APIError::FailedToQuery(e).error().into_response(),
