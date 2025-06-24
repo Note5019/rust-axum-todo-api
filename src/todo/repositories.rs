@@ -11,6 +11,8 @@ pub type SharedTodoRepository = Arc<dyn TodoMethod + Send + Sync>;
 pub trait TodoMethod {
     async fn add_todo(&self, todo: Todos) -> Result<Todos, sqlx::Error>;
     async fn get_todos(&self) -> Result<Vec<Todos>, sqlx::Error>;
+    async fn get_todo(&self, id: i32) -> Result<Todos, sqlx::Error>;
+    async fn update_todo(&self, todo: Todos) -> Result<(), sqlx::Error>;
 }
 
 pub struct TodoRepository {
@@ -62,6 +64,54 @@ impl TodoMethod for TodoRepository {
                 error!("Failed to query: {:?}", e);
                 return Err(e);
             }
+        }
+    }
+
+    async fn get_todo(&self, id: i32) -> Result<Todos, sqlx::Error> {
+        match sqlx::query_as::<_, Todos>("SELECT * FROM todos WHERE id = $1;")
+            .bind(id)
+            .fetch_one(&self.db)
+            .await
+        {
+            Ok(todos) => Ok(todos),
+            Err(e) => {
+                error!("Failed to query: {:?}", e);
+                return Err(e);
+            }
+        }
+    }
+
+    async fn update_todo(&self, todo: Todos) -> Result<(), sqlx::Error> {
+        let res = match sqlx::query(
+            "UPDATE todos SET
+            topic = $1,
+            completed = $2,
+            updated_at = $3,
+            completed_at = $4
+            WHERE id = $5
+        ",
+        )
+        .bind(todo.topic)
+        .bind(todo.completed)
+        .bind(todo.updated_at)
+        .bind(todo.completed_at)
+        .bind(todo.id)
+        .execute(&self.db)
+        .await
+        {
+            Ok(row) => row,
+            Err(e) => {
+                error!("Failed to update todo: {:?}", e);
+                return Err(e);
+            }
+        };
+
+        match res.rows_affected() {
+            0 => {
+                error!("Failed to update todo:");
+                return Err(sqlx::Error::RowNotFound);
+            }
+            _ => Ok(()),
         }
     }
 }

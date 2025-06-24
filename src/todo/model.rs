@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, PartialEq)]
-pub struct TodoAdding {
+pub struct CreateTodo {
     pub topic: String,
 }
 
@@ -13,4 +13,10 @@ pub struct TodoModel {
     // pub completed_at: Option<NaiveDateTime>,
     // pub created_at: NaiveDateTime,
     // pub updated_at: NaiveDateTime,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateTodo {
+    pub topic: Option<String>,
+    pub completed: Option<bool>,
 }
