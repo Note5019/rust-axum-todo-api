@@ -37,18 +37,23 @@
     ```
     - task-local variables (smol does not yet support)
 
-
-## Create database
-```sql
-begin;
-    create table todos 
-    ( 
-        "id" serial primary key,
-        "topic" varchar(64) not null,
-        "completed" BOOLEAN DEFAULT false,
-        "completed_at" timestamp,
-        "created_at" timestamp not null,
-        "updated_at" timestamp not null
-    );
-commit;
+## Create database and table by sql-cli
+- postgres running in docker
+- create `.env` file with `DATABASE_URL=` variable
+- run in terminal
+```shell
+$ cargo install sqlx-cli
+$ sqlx database create
+```
+- create migration (reversible migrations)
+```shell
+$ sqlx migrate add -r add_todos_table
+```
+- run migration
+```shell
+$ sqlx migrate run
+```
+- revert migration
+```shell
+$ sqlx migrate revert
 ```

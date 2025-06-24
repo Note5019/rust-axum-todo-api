@@ -21,6 +21,11 @@ async fn main() {
     let db_pool = database::conn_getting(Arc::clone(&setting)).await.unwrap();
     info!("database connection has been established.");
 
+    // match sqlx::migrate!("./migrations").run(&db_pool).await {
+    //     Ok(_) => println!("run migration successful."),
+    //     Err(e) => println!("Migration error: {}", e),
+    // };
+
     let timer_helper: IntoTimerHelperShared = TimerHelper::Directly.creation();
 
     let todo_repository: SharedTodoRepository = TodoRepository::creation(db_pool.clone());
@@ -48,5 +53,4 @@ async fn main() {
 
     axum::serve(listener, app).await.unwrap();
     info!("Application running! 2");
-
 }
