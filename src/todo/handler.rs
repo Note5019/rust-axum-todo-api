@@ -46,7 +46,7 @@ pub async fn get_todos(State(app): State<Arc<AppState>>) -> impl IntoResponse {
 
 pub async fn get_todo(State(app): State<Arc<AppState>>, Path(id): Path<i32>) -> impl IntoResponse {
     let todo_repository: SharedTodoRepository = TodoRepository::creation(app.db.clone());
-       let todo = match todo_repository.get_todo(id).await {
+    let todo = match todo_repository.get_todo(id).await {
         Ok(todo) => todo,
         Err(e) => return APIError::FailedToQuery(e).error().into_response(),
     };
@@ -83,5 +83,17 @@ pub async fn update_todo(
     match todo_repository.update_todo(todo).await {
         Ok(_) => (StatusCode::OK).into_response(),
         Err(e) => APIError::AddingTodoError(e).error().into_response(),
+    }
+}
+
+pub async fn delete_todo(
+    State(app): State<Arc<AppState>>,
+    Path(id): Path<i32>,
+) -> impl IntoResponse {
+    let todo_repository: SharedTodoRepository = TodoRepository::creation(app.db.clone());
+
+    match todo_repository.delete_todo(id).await {
+        Ok(_) => (StatusCode::NO_CONTENT).into_response(),
+        Err(_) => return APIError::TodoNotFound(id).error().into_response(),
     }
 }

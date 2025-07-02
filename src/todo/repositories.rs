@@ -13,6 +13,7 @@ pub trait TodoMethod {
     async fn get_todos(&self) -> Result<Vec<Todos>, sqlx::Error>;
     async fn get_todo(&self, id: i32) -> Result<Todos, sqlx::Error>;
     async fn update_todo(&self, todo: Todos) -> Result<(), sqlx::Error>;
+    async fn delete_todo(&self, id: i32) -> Result<(), sqlx::Error>;
 }
 
 pub struct TodoRepository {
@@ -96,6 +97,32 @@ impl TodoMethod for TodoRepository {
         .bind(todo.updated_at)
         .bind(todo.completed_at)
         .bind(todo.id)
+        .execute(&self.db)
+        .await
+        {
+            Ok(row) => row,
+            Err(e) => {
+                error!("Failed to update todo: {:?}", e);
+                return Err(e);
+            }
+        };
+
+        match res.rows_affected() {
+            0 => {
+                error!("Failed to update todo:");
+                return Err(sqlx::Error::RowNotFound);
+            }
+            _ => Ok(()),
+        }
+    }
+
+    async fn delete_todo(&self, id: i32) -> Result<(), sqlx::Error> {
+        let res = match sqlx::query(
+            "DELETE FROM todos 
+            WHERE id = $1;
+        ",
+        )
+        .bind(id)
         .execute(&self.db)
         .await
         {
