@@ -44,6 +44,16 @@ pub async fn get_todos(State(app): State<Arc<AppState>>) -> impl IntoResponse {
     (StatusCode::OK, Json(todo_models)).into_response()
 }
 
+pub async fn get_todo(State(app): State<Arc<AppState>>, Path(id): Path<i32>) -> impl IntoResponse {
+    let todo_repository: SharedTodoRepository = TodoRepository::creation(app.db.clone());
+       let todo = match todo_repository.get_todo(id).await {
+        Ok(todo) => todo,
+        Err(e) => return APIError::FailedToQuery(e).error().into_response(),
+    };
+
+    (StatusCode::OK, Json(todo.to_model())).into_response()
+}
+
 pub async fn update_todo(
     State(app): State<Arc<AppState>>,
     Path(id): Path<i32>,

@@ -2,7 +2,7 @@ use axum::{
     Router,
     routing::{get, post, put},
 };
-use rust_axum_todo_api::todo::handler::{create_todo, get_todos, update_todo};
+use rust_axum_todo_api::todo::handler::{create_todo, get_todo, get_todos, update_todo};
 use rust_axum_todo_api::{app_state::AppState, time_helper::TimerHelper};
 use rust_axum_todo_api::{database, setting::Setting};
 use sqlx::Postgres;
@@ -34,7 +34,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(|| async { "Hello, World!" }))
         .route("/todos", post(create_todo).get(get_todos))
-        .route("/todos/{id}", put(update_todo))
+        .route("/todos/{id}", put(update_todo).get(get_todo))
         .with_state(shared_state);
 
     // run our app with hyper, listening globally on port 3000
