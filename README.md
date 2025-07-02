@@ -1,13 +1,3 @@
-## TODO
-    - get all by user
-    - get todo list by user
-    - create a todo
-    - edit a todo
-    - make as completed
-    - delete a todo
-
-    - register a user
-    - login
 ## JOT
     request
         -> router
